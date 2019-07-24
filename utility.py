@@ -292,7 +292,7 @@ def checkClusterStatus(cluster):
 
 # # # ------------------- REQUERY INDEXES AT TIMESTAMP --------------------------
 filename = '/Users/rwilk193/GitProjects/telemetry-data-service-config/index.json'
-source_index = "media_tuning_60-000290"
+source_index = "smart_statistics_60-000361"
 source_host = "tvxelc-le-ct10004-g.mirs.aws.r53.xcal.tv"
 # source_host='tvxelc-hob-ct0005-g.mirs.aws.r53.xcal.tv'
 # source_host="96.117.7.93"
@@ -303,8 +303,8 @@ source_host = "tvxelc-le-ct10004-g.mirs.aws.r53.xcal.tv"
 # target_data_type="copy_item"
 year = 2019
 month = 7
-day = 21
-hour = 4
+day = 23
+hour = 8
 
 timestamp = epoch_time(year, month, day, hour, 0, 0)
 dataset = parse_name_from_index(source_index)
