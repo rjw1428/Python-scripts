@@ -9,8 +9,6 @@ from tqdm import tqdm
 
 # -------- UTILITY FUNCTIONS -------------------
 # Convert epoch to something readable (GMT)
-
-
 def readable_time_gmt(timestamp):
     return time.strftime("%Y-%m-%d_%H:%M", time.gmtime(timestamp/1000))
 
@@ -19,8 +17,6 @@ def epoch_time(year, month, day, hour, minute, second):
     return calendar.timegm((year, month, day, hour, minute, second))*1000
 
 # Get all timestamps in a given index (Recursive)
-
-
 def get_timestamps_from_index(host, index, excludeList={}):
     header = {'Content-Type': 'application/json'}
     if len(excludeList) == 0:
@@ -55,8 +51,6 @@ def get_timestamps_from_index(host, index, excludeList={}):
         print(e)
 
 # Get all indexes that are contained for a given timestamp
-
-
 def get_index_from_timestamp(host, dataset, interval, timestamp, excludeList={}):
     header = {'Content-Type': 'application/json'}
     if len(excludeList) == 0:
@@ -92,8 +86,6 @@ def get_index_from_timestamp(host, dataset, interval, timestamp, excludeList={})
         print(e)
 
 # Read json file and output given property
-
-
 def change_json_file(filename, propery):
     with open(filename) as f:
         data = json.load(f)
@@ -120,7 +112,13 @@ def parse_name_from_index(name):
 def parse_interval_from_index(name):
     base = name.split("-")
     parts = base[0].split("_")
-    return parts[-1]
+    if parts[-1].isdigit():
+        return parts[-1]
+    elif parts[-1]=='copyto':
+        if parts[-2].isdigit():
+            return parts[-2]
+    else:
+        return 1
 
 
 def requeryIndexDiffCounts(timestamp, dataset, interval):
@@ -292,9 +290,10 @@ def checkClusterStatus(cluster):
 
 # # # ------------------- REQUERY INDEXES AT TIMESTAMP --------------------------
 filename = '/Users/rwilk193/GitProjects/telemetry-data-service-config/index.json'
-source_index = "smart_statistics_60-000361"
-source_host = "tvxelc-le-ct10004-g.mirs.aws.r53.xcal.tv"
-# source_host='tvxelc-hob-ct0005-g.mirs.aws.r53.xcal.tv'
+source_index = "time_spent_watching_60-000287"
+# source_host = "tvxelc-le-ct10004-g.mirs.aws.r53.xcal.tv"
+source_host='tvxelc-hob-ct0005-g.mirs.aws.r53.xcal.tv'
+# source_host='tvxels-lw-ct00001-g.mirs.aws.r53.xcal.tv'
 # source_host="96.117.7.93"
 # source_index="time_spent_watching_60_copyto-9999999"
 
@@ -303,8 +302,8 @@ source_host = "tvxelc-le-ct10004-g.mirs.aws.r53.xcal.tv"
 # target_data_type="copy_item"
 year = 2019
 month = 7
-day = 23
-hour = 8
+day = 18
+hour = 23
 
 timestamp = epoch_time(year, month, day, hour, 0, 0)
 dataset = parse_name_from_index(source_index)
@@ -316,18 +315,18 @@ interval = parse_interval_from_index(source_index)
 # for t in sorted(timestamps.keys()):
 #     print("  "+str(t)+"  "+readable_time_gmt(t))
 
-# # GET INDEXES AT A TIMESTAMP
-indexes=get_index_from_timestamp(source_host, dataset, interval, timestamp)
-print(str(timestamp)+"  "+readable_time_gmt(timestamp)+"  "+source_host)
-for i in indexes:
-    print("  "+str(i))
-print()
+# GET INDEXES AT A TIMESTAMP
+# indexes=get_index_from_timestamp(source_host, dataset, interval, timestamp)
+# print(str(timestamp)+"  "+readable_time_gmt(timestamp)+"  "+source_host)
+# for i in indexes:
+#     print("  "+str(i))
+# print()
 
 # CHECK HOST HEALTH
 # checkClusterStatus(source_host)
 
 # REQUERY INDEXES AT TIMESTAMP
-# for i in range(0,13):
+# for i in range(0,1):
 #     timestamp = epoch_time(year, month, day, hour+i, 0, 0)
 #     requeryIndexDiffCounts(timestamp, dataset, interval)
 
@@ -335,30 +334,5 @@ print()
 # response=queryES(source_host, source_index, buildQuery(timestamp))
 # copies=response['hits']['hits']
 # writeResponse(copies, target_host, target_index, target_data_type)
-
-# try:
-#     response = requests.get(
-#     "https://blog.bitsrc.io/the-principles-for-writing-awesome-angular-components-10e45f9ae77e")
-#     text=response.text
-#     start=text.find("<body>")
-#     end=text.find("Resources")
-#     print(text[start:end])
-# except requests.exceptions.RequestException as e:
-#     print(e)
-
-
-# def fib(x):
-#     a=1
-#     b=0
-#     temp=0
-
-#     while(x>=0):
-#         temp=a
-#         a=a+b
-#         b=temp
-#         x=x-1
-#     print(b)
-
-# fib(499)
 
 
