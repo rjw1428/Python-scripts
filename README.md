@@ -11,3 +11,8 @@
 
 ## utility.py
 - Misc Utility functions to do my job
+
+## indexSizeCalc.py
+- Calculates the size and number of documents for all indexes within a cluster over the last 24 hrs
+- Sums the size based on aggregation interval
+- Calculates the total size of data stored within the last 24 hours for a cluster
