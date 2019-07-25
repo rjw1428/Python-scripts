@@ -6,9 +6,9 @@ import requests
 import time
 
 
-# source_host = "tvxelc-le-ct10004-g.mirs.aws.r53.xcal.tv"
+source_host = "tvxelc-le-ct10004-g.mirs.aws.r53.xcal.tv"
 # source_host='tvxelc-hob-ct0005-g.mirs.aws.r53.xcal.tv'
-source_host='tvxels-lw-ct00001-g.mirs.aws.r53.xcal.tv'
+# source_host='tvxels-lw-ct00001-g.mirs.aws.r53.xcal.tv'
 
 def readable_time_gmt(timestamp):
     return time.strftime("%Y-%m-%d_%H:%M", time.gmtime(timestamp/1000))
@@ -49,7 +49,7 @@ def buildIndexItems(index_list_raw):
     for i in range(1,len(lines)-1):
         item_raw=lines[i].split()
         interval = parse_interval_from_index(item_raw[2])
-        item={'name':item_raw[2], 'size':convertToSize(item_raw[9]), 'interval':interval}
+        item={'name':item_raw[2], 'size':convertToSize(item_raw[9]), 'interval':int(interval)}
         index_list.append(item)
     return index_list
 
@@ -126,7 +126,7 @@ for i in tqdm(range(len(index_list)), desc="Counting Things & Stuff: ", ncols=10
 sorted_index_list=sorted(index_list, key=lambda k: int(k['interval']))
 for i in sorted_index_list:
     if i['matches']>0:
-        print("{:40s}  {:10s}  {:10s}".format(i['name'],str(i['matches']/1000)+"k",str(i['daily_size']/1000000000)+"gb"))
+        print("{:40s} {:10s} {:10s}".format(i['name'],str(i['matches']/1000)+"k",str(i['daily_size']/1000000000)+"gb"))
 
 print("---RESULTS---")
 print(source_host)
