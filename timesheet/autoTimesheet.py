@@ -8,8 +8,28 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 import smtplib
 import time
+import datetime
+import calendar
+import schedule
+import yagmail
+from dateutil import relativedelta
+
 
 week_time=[8, 8, 8, 8, 8, 0, 0]
+
+def getWeekTimeframe():
+    ct=datetime.datetime.now()
+    start = ct - datetime.timedelta((ct.weekday()) % 7)
+    end = ct - datetime.timedelta((ct.weekday()+1) % 7 - 7)
+    return (start, end)
+
+def formatDateForEmail(timeframe):
+    start, end=timeframe
+    return "{:%m/%d} - {:%m/%d}".format(start,end)
+    
+def formatDateForScreenshot(timeframe):
+    start, end=timeframe
+    return "{:%m-%d} - {:%m-%d}".format(start,end)
 
 def doWebStuff():
     browser = webdriver.Chrome()
@@ -25,7 +45,7 @@ def doWebStuff():
                 inputBox[i].clear()
                 inputBox[i].send_keys(str(week_time[i]))
 
-        save = browser.find_element_by_xpath("//button[contains(.,'Save')]")
+        save = browser.find_element_by_xpath("//button[contains(.,'Submit')]")
         if save.is_displayed():
             save.click()
         else:
@@ -43,13 +63,35 @@ def doWebStuff():
 
     inputBox = browser.find_elements_by_class_name('uiInputNumber')
     if inputBox[0].is_displayed():
-        browser.save_screenshot("Timesheet Wilk, Ryan.png")
+        browser.save_screenshot("Timesheet Wilk, Ryan "+formatDateForScreenshot(getWeekTimeframe())+".png")
     else:
         exit(1)
     browser.close()
 
+def sendEmailViaGmail():
+    send_from='wilk.ryan14@gmail.com'
+    send_to=['rjw1428@gmail.com']
+    subject = "Timesheet - "+formatDateForEmail(getWeekTimeframe())+" - Wilk"
+    body='Hi Dan,\n\nAttached is my timesheet for the week.\n\nRegards,\nRyan'
+    email_text="""\From: %s To: %s Subject: %s %s """%(send_from, ', '.join(send_to), subject, body)
+    try:
+        print("Sending Message with Gmail")
+        yag=yagmail.SMTP(user='wilk.ryan14@gmail.com', password="Bball@1428")
+        # # server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        # server.ehlo()
+        # server.starttls()
+        # print("  - Logging in")
+        # server.login('wilk.ryan14@gmail.com', 'Bball@1428')
+        # print("  - Login Successful")
+        yag.send(send_to, subject, email_text)
+        # server.sendmail(send_from, send_to, email_text)
+        print("  - Mail Send")
+        # server.close()
+        print("  - Server Closed")
+    except:
+        print('Something went wrong...')
 
-def sendEmail():
+def sendEmailViaOutlook():
     browser = webdriver.Chrome()
     browser.get(
         "https://webmail.comcast.com")
@@ -61,23 +103,23 @@ def sendEmail():
         to = browser.find_elements_by_class_name('_fp_G')
         if to[0].is_displayed():
             to[0].send_keys("dmadden@teksystems.com")
+            time.sleep(1)
+            to[0].send_keys(Keys.TAB)
         else:
             exit(1)
         
         to[0].send_keys(Keys.TAB)
         time.sleep(1)
         browser.switch_to_active_element().send_keys(Keys.TAB)
+        time.sleep(1)
+        # browser.switch_to_active_element().send_keys(Keys.TAB)
+        # time.sleep(1)
         browser.switch_to_active_element().send_keys("cmcnelly@teksystems.com")
-        to[1].send_keys(Keys.TAB) #browser.switch_to_active_element().send_keys(Keys.ENTER).send_keys(Keys.TAB)
+        to[1].send_keys(Keys.TAB)
         time.sleep(1)
         browser.switch_to_active_element().send_keys(Keys.TAB)
-        browser.switch_to_active_element().send_keys("Timesheet - <<DATE>> - Wilk")
-
-    # subject_line = browser.find_element_by_class_name('_mcp_o1').find_element_by_class_name('_mcp_82').find_element_by_id('_mcp_c')
-    # if subject_line.is_displayed():
-    #     subject_line.send_keys("Timesheet - <<DATE>> - Wilk")
-    # else:
-    #     exit(1)
+        time.sleep(1)
+        browser.switch_to_active_element().send_keys("Timesheet - "+formatDateForEmail(getWeekTimeframe())+" - Wilk")
 
     time.sleep(1)
     message = browser.find_element_by_class_name('_mcp_32')
@@ -108,8 +150,24 @@ def sendEmail():
     else:
         exit(1)
     
-    time.sleep(20)
+    time.sleep(120)
     # browser.close()
 
+def main():
+    # doWebStuff()
+    # sendEmailViaOutlook()
+    sendEmailViaGmail()
 
-sendEmail()
+main()
+# schedule.every().friday.at('11:00').do(lambda: main())
+
+# alert=True
+
+# while True:
+#     if datetime.datetime.now().weekday()==4 and alert:
+#         print("TASK SCHEDULED FOR TODAY AT 11:00")
+#         alert=False
+#     elif datetime.datetime.now().weekday()!=4:
+#         alert=True
+#     schedule.run_pending()
+
