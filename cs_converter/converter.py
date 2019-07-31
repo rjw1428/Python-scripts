@@ -1,5 +1,7 @@
 import xlrd
-loc = "/Users/rwilk193/Downloads/Document #1 (Before).xlsx"
+import re
+
+loc = "Document #1 (Before).xlsx"
 wb = xlrd.open_workbook(loc)
 sheet = wb.sheet_by_index(0)
 
@@ -12,8 +14,19 @@ for row in range(1, sheet.nrows):
     units2 = sheet.cell_value(row, 3)
     qty1 = sheet.cell_value(row, 4)
     units1 = sheet.cell_value(row, 5)
-    item = {'name': name, 'desc': desc, 'qty2': qty2,
-            'units2': units2, 'qty1': qty1, 'units1': units1, 'index':row, 'matched':False}
+    item = {
+        'name': name, 
+        'desc': desc, 
+        'qty2': qty2,
+        'units2': units2, 
+        'qty1': qty1, 
+        'units1': units1, 
+        'index':row, 
+        'matched':False,
+        'floor': None,
+        'section':None,
+        'type': None
+    }
     items.append(item)
 
 
@@ -24,87 +37,129 @@ def checkInt(x):
     except ValueError:
         return False
 
-def checkConsecutive(items_list):
-    start=items_list[0]['index']
-    end=items_list[0]['index']
-    for i in range(1,len(items_list)):
-        if items_list[i]['index']-1!=items_list[i-1]['index']:
-            end=items_list[i-1]['index']
-            print(str(start+1)+"  "+str(end+1))
-            start=items_list[i]['index']
 
-elevatorPit=[]
-columns=[]
-walls=[]
-slabSteps=[]
-slabs=[]
-dropPanels=[]
-curbs=[]
-colCaps=[]
-for i in range(0, len(items)):
-    if ('elev' in items[i]['name'].lower() and 'wall' in items[i]['name'].lower()) or ('elev' in items[i]['name'].lower() and 'pit' in items[i]['name'].lower()):
-    # if 'elev' in items[i]['name'].lower() and 'pit' in items[i]['name'].lower():
-        elevatorPit.append(items[i])
-        items[i]['matched']=True
-    elif items[i]['name'].lower()[0]=='c' and checkInt(items[i]['name'].lower()[1]):
-        columns.append(items[i])
-        items[i]['matched']=True
-    elif items[i]['name'].lower()[0]=='d' and items[i]['name'].lower()[1]=='p':
-        dropPanels.append(items[i])
-        items[i]['matched']=True
-    elif 'slab step' in items[i]['name'].lower():
-        slabSteps.append(items[i])
-        items[i]['matched']=True
-    elif 'slab' in items[i]['name'].lower() or 'sog' in items[i]['name'].lower():
-        slabs.append(items[i])
-        items[i]['matched']=True
-    elif 'wall' in items[i]['name'].lower():
-        walls.append(items[i])
-        items[i]['matched']=True
-    elif 'curb' in items[i]['name'].lower():
-        curbs.append(items[i])
-        items[i]['matched']=True
-    elif 'col' in items[i]['name'].lower() and 'cap' in items[i]['name'].lower():
-        colCaps.append(items[i])
-        items[i]['matched']=True
+def getMaterialType(item):
+    # if ('elev' in item['name'].lower() and 'wall' in item['name'].lower()) or ('elev' in item['name'].lower() and 'pit' in item['name'].lower()):
+    if 'elev' in item['name'].lower() and 'pit' in item['name'].lower():
+        item['type']="Elevator Pit"
+    elif item['name'].lower()[0]=='c' and checkInt(item['name'].lower()[1]):
+        item['type']="Columns"
+    elif item['name'].lower()[0]=='d' and item['name'].lower()[1]=='p':
+        item['type']="Drop Panels"
+    elif 'slab step' in item['name'].lower():
+        item['type']="Slab Step"
+    elif 'slab' in item['name'].lower() or 'sog' in item['name'].lower():
+        item['type']="Slab"
+    elif 'wall' in item['name'].lower():
+        item['type']="Walls"
+    elif 'curb' in item['name'].lower():
+        item['type']="Curb"
+    #Column Cap -> Drop Panel
+    elif 'col' in item['name'].lower() and 'cap' in item['name'].lower():
+        item['type']="Drop Panels"
 
-print("ELEVATOR PIT")
-for item in elevatorPit:
-    print("  "+str(item['name'])+"    "+str(item['desc']))
 
-# print("COLUMNS")
-# for item in columns:
-#     print("  "+str(item['name'])+"    "+str(item['index']))
+def determineProperties(items):
+    for item in items:
+        words=item['name'].lower().split()
+        for i in range(0,len(words)):
+            if 'fl' in words[i] or 'fl/' in words[i] or 'floor' in words[i]:
+                if 'st' in words[i-1]:
+                    n=words[i-1].find('st')
+                elif 'nd' in words[i-1]:
+                    n=words[i-1].find('nd')
+                elif 'rd' in words[i-1]:
+                    n=words[i-1].find('rd')
+                elif 'th' in words[i-1]:
+                    n=words[i-1].find('th')
+                item['floor']=int(words[i-1][n-1])
 
-checkConsecutive(elevatorPit)
-# print("SLAB STEPS")
-# for item in slabSteps:
-#     print("  "+str(item['name'])+"    "+str(item['desc']))
+            elif 'found' in words[i] or 'found/' in words[i]:
+                item['floor']=1
 
-# print("SLABS")
-# for item in slabs:
-#     print("  "+str(item['name'])+"    "+str(item['desc']))
 
-# print("DROP PANELS")
-# for item in dropPanels:
-#     print("  "+str(item['name'])+"    "+str(item['desc']))
+            if ('part' in words[i] or 'section' in words[i]):
+                if i<len(words)-1:
+                    if words[i+1].isnumeric():
+                        item['section']=int(words[i+1])
+                else:
+                    x=words[i].split('part')
+                    item['section']=int(x[1])
 
-# print("WALLS")
-# for item in walls:
-#     print("  "+str(item['name'])+"    "+str(item['desc']))
+def inferProperties(items, property):
+    currentFloor=1
+    currentStart=0
+    for item in items:
+        # print(item['index'])
+        if item[property]!=None:
+            if item[property]!=currentFloor:
+                # print("END "+str(currentFloor)+": "+str(item['index']-1))
+                writeGroupFloors(currentFloor, currentStart, item['index']-1, items, property)
+                currentStart=item['index']
+                currentFloor=item[property]
+    writeGroupFloors(currentFloor, currentStart, len(items), items, property)
 
-# print("CURBS")
-# for item in curbs:
-#     print("  "+str(item['name'])+"    "+str(item['desc']))
+def writeGroupFloors(floor, start, end, items, property):
+    for i in range(start,end):
+        items[i][property]=floor
 
-# print("COL CAPS")
-# for item in colCaps:
-#     print("  "+str(item['name'])+"    "+str(item['desc']))
+determineProperties(items)
+inferProperties(items, 'floor')
+inferProperties(items, 'section')
+
+for item in items:
+    getMaterialType(item)
+    if item['section']!=None and item['floor']!=None and item['type']!=None:
+        item['matched']=True
+
+
+
+
+sections={}
+for item in items:
+    # if item['floor']==1:
+    if item['section'] in sections:
+        item_list=sections[item['section']]
+        item_list.append(item)
+        sections[item['section']]=item_list
+    else:
+        item_list=[item]
+        sections.update({item['section']:item_list})
+
+for section in sections:
+    floors={}
+    print("---------Section "+str(section)+" ----------")
+    for item in sections[section]:
+        if item['floor'] in floors:
+            item_list=floors[item['floor']]
+            item_list.append(item)
+            floors[item['floor']]=item_list
+        else:
+            item_list=[item]
+            floors.update({item['floor']:item_list})
+    
+    for floor in floors:
+        materialTypes={}
+        print("FLOOR: "+str(floor))
+        for item in floors[floor]:
+            if item['type'] in materialTypes:
+                item_list=materialTypes[item['type']]
+                item_list.append(item)
+                materialTypes[item['type']]=item_list
+            else:
+                item_list=[item]
+                materialTypes.update({item['type']:item_list})
+
+        for materialType in materialTypes:
+            print("  "+str(materialType.upper()))
+            for item in materialTypes[materialType]:
+                print("    - "+str(item['index'])+"  "+item['name']+" - "+str(item['floor'])+"/"+str(item['section']))
+
 
 print("REMAINING:")
 count=0
 for item in items:
     if item['matched']==False:
         count+=1
-        # print("  "+str(item['name'])+"    "+str(item['desc']))
+        print("  "+str(item['index'])+"  "+str(item['name'])+"    "+str(item['desc']))
 print(count)
