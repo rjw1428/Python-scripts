@@ -2,8 +2,8 @@
 import xlrd
 
 # Give the location of the file
-takeoff_doc = '/Users/rwilk193/Downloads/Document #2 (After).xlsx'
-estimate_doc = '/Users/rwilk193/Downloads/COST SPREADSHEET (1).xlsx'
+takeoff_doc = './cs_converter/Document #2 (After).xlsx'
+estimate_doc = './cs_converter/COST SPREADSHEET.xlsx'
 
 # To open Workbook
 takeoff = xlrd.open_workbook(takeoff_doc)
