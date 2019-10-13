@@ -1,9 +1,19 @@
-# Reading an excel file using Python
+# TODO LIST:
+# BUILD A JAVA LAUNCHER TO:
+#   - SELECT INPUT TAKEOFF DOC
+#   - SELECT ESTIMATE TEMPLATE (REMEMBER LOCATION)
+#   - EXECUTE PYTHON SCRIPT
+# PACKAGE PYTHON (?)
+# DO SECTION (DOES THAT GO ON ANOTHER PAGE?)
+# IMPROVE MATCHING DEFINITIONS
+# DO SOMETHING WITH THINGS THAT ARENT MATCHED
+# INJECT A FORMULA INSTEAD OF A VALUE
+# MATCH THINGS THAT ARE IN THE 
+
 import xlrd
 import xlsxwriter
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
-# from openpyxl import Workbook
 
 # Give the location of the file
 takeoff_doc = './/Document #2 (After).xlsx'
